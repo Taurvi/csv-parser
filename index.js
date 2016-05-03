@@ -16,6 +16,11 @@ _serverMsg('Loading dependencies.', 1)
 var express = require('express');
 _serverMsg('Loaded Express.', 2)
 
+// Loads the cors package
+var cors = require('cors')
+serverMsg(' Loaded cors.')
+
+// Loads the fs package
 var fs = require('fs')
 _serverMsg('Loaded fs.', 2)
 
@@ -34,6 +39,10 @@ _serverMsg('Initializing server functionality.', 1)
 // Initializes Express
 var app = express();
 _serverMsg('Initialized Express.', 2)
+
+// Initializes cors
+app.use(cors());
+_serverMsg('Initialized cors.', 2)
 
 // Defines storage for Multer
 var storage = multer.diskStorage({
@@ -69,7 +78,7 @@ var _filter = function (req, file, cb) {
 }
 
 var upload = multer({ storage: storage, fileFilter: _filter})
-_serverMsg('Multer upload storage initialized.', 2)
+_serverMsg('Multer upload storage and filter initialized.', 2)
 
 // Sets port to defined in the environment or 3000
 var port = process.env.PORT || 3000;
