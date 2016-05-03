@@ -18,7 +18,7 @@ _serverMsg('Loaded Express.', 2)
 
 // Loads the cors package
 var cors = require('cors')
-serverMsg(' Loaded cors.')
+_serverMsg('Loaded cors.', 2)
 
 // Loads the fs package
 var fs = require('fs')
