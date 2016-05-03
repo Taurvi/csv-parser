@@ -16,6 +16,9 @@ _serverMsg('Loading dependencies.', 1)
 var express = require('express');
 _serverMsg('Loaded Express.', 2)
 
+var fs = require('fs')
+_serverMsg('Loaded fs.', 2)
+
 // Loads the multer package
 var multer = require('multer');
 _serverMsg('Loaded Multer.', 2);
@@ -43,7 +46,29 @@ var storage = multer.diskStorage({
 })
 _serverMsg('Multer storage defined.', 2)
 
-var upload = multer({ storage: storage })
+/**
+ * Checks if the file is valid format.
+ * @param req - Request object
+ * @param file - File object
+ * @param cb - Callback
+ * @private
+ */
+var _filter = function (req, file, cb) {
+    _serverMsg('Validating file.', 1);
+    if (file && file.mimetype == 'text/csv') {
+        _serverMsg('File is valid.', 2);
+        cb(null, true)
+        return;
+    } else {
+        _serverMsg('File is invalid.', 2)
+        cb(null, false)
+        cb(new Error('Incorrect file type'))
+        return;
+    }
+
+}
+
+var upload = multer({ storage: storage, fileFilter: _filter})
 _serverMsg('Multer upload storage initialized.', 2)
 
 // Sets port to defined in the environment or 3000
@@ -66,11 +91,77 @@ router.get('/', function(req, res) {
     res.json({ message: 'API connection successful' });
 });
 
-router.post('/upload', upload.single('csv'), function (req, res, next) {
-    console.log(req.file);
-    // req.file is the `avatar` file
-    // req.body will hold the text fields, if there were any
-})
+/**
+ * Converts a CSV array into JSON
+ * @param csvArray - An array generated from CSVParse
+ * @returns {Array} - JSON formatted array
+ * @private
+ */
+var _convertToJSON = function(csvArray) {
+    _serverMsg('Converting CSV to JSON.', 1);
+    var splicedKey = csvArray.splice(0, 1);
+    var keys = splicedKey[0];
+    var convertedCsv = [];
+    csvArray.map(function(line) {
+        var tempObj = {};
+        for (var i = 0; i < line.length; i++)
+            if (keys[i] == 'number')
+                tempObj[keys[i]] = convertNumber(line[i]);
+            else
+                tempObj[keys[i]] = line[i];
+        convertedCsv.push(tempObj);
+    });
+    _serverMsg('CSV succesfully converted to JSON.', 2);
+    return convertedCsv;
+};
+
+// Specifies the field being uploaded
+var uploadFile = upload.single('csv')
+
+// The API route for uploading
+router.post('/upload', function (req, res, next) {
+    _serverMsg('******** API CALLED ********', 0)
+    uploadFile(req, res, function error(err) {
+        if (err) {
+            // Checks if there was an error on uploading the file.
+            res.status(422).send('The file uploaded was not a CSV.');
+        } else {
+            _serverMsg('Reading the CSV.', 1);
+            var converted = [];
+            fs.readFile('tmp/tmp.csv', function(err, data) {
+                if (err) {
+                    // Checks if there was an error reading the file.
+                    _serverMsg('There was an error reading the CSV.', 2);
+                    res.status(422).send('There was an error with reading the CSV.')
+                } else {
+                    _serverMsg('CSV succesfully read.', 2);
+                    // Stores the raw data to a string
+                    var csvRaw = data.toString();
+                    var csvArray = [];
+                    // Uses CSV parse to parse the data into an array
+                    _serverMsg('Parsing the CSV.', 1);
+                    CSVParse(csvRaw, function(err, output) {
+                        if (err) {
+                            // Checks if there was an error with CSV Parse
+                            _serverMsg('There was an error parsing the CSV.', 2);
+                            res.status(422).send('There was an error with reading the CSV.');
+                        } else {
+                            _serverMsg('CSV succesfully parsed.', 2);
+                            // Stores the CSV Array into output
+                            csvArray = output;
+                            // Converts the CSV Array to JSON
+                            converted = _convertToJSON(csvArray);
+                        }
+                        // Returns the JSON
+                        _serverMsg('Returning converted CSV.', 1);
+                        res.status(200).send(converted);
+                        _serverMsg('******** ENDING API CALL ********', 0)
+                    })
+                }
+            });
+        }
+    });
+});
 
 // Start server
 app.listen(port);
