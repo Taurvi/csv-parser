@@ -120,7 +120,7 @@ var _convertToJSON = function(csvArray) {
                 tempObj[keys[i]] = line[i];
         convertedCsv.push(tempObj);
     });
-    _serverMsg('CSV succesfully converted to JSON.', 2);
+    _serverMsg('CSV successfully converted to JSON.', 2);
     return convertedCsv;
 };
 
@@ -143,7 +143,7 @@ router.post('/upload', function (req, res, next) {
                     _serverMsg('There was an error reading the CSV.', 2);
                     res.status(422).send('There was an error with reading the CSV.')
                 } else {
-                    _serverMsg('CSV succesfully read.', 2);
+                    _serverMsg('CSV successfully read.', 2);
                     // Stores the raw data to a string
                     var csvRaw = data.toString();
                     var csvArray = [];
@@ -155,7 +155,7 @@ router.post('/upload', function (req, res, next) {
                             _serverMsg('There was an error parsing the CSV.', 2);
                             res.status(422).send('There was an error with reading the CSV.');
                         } else {
-                            _serverMsg('CSV succesfully parsed.', 2);
+                            _serverMsg('CSV successfully parsed.', 2);
                             // Stores the CSV Array into output
                             csvArray = output;
                             // Converts the CSV Array to JSON
